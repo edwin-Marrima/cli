@@ -20,6 +20,7 @@ package output
 import (
 	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"os"
 
 	"github.com/mattn/go-isatty"
@@ -61,6 +62,11 @@ func (prt *csvPrinter) DisplayColor(data any) error {
 	return prt.DisplayNoColor(data)
 }
 func (prt *csvPrinter) DisplayNoColor(data any) error {
+	result, err := yaml.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("unable to marshal yaml with error %w", err)
+	}
+	fmt.Println(string(result))
 	return nil
 }
 func (prt *yamlPrinter) DisplayColor(data any) error {
