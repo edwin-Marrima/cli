@@ -35,9 +35,26 @@ type csvPrinter struct{}
 type yamlPrinter struct{}
 
 func (prt *jsonPrinter) DisplayNoColor(data any) error {
+	result, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return fmt.Errorf("unable to marshal json with error %w", err)
+	}
+
+	fmt.Println(string(result))
+
 	return nil
 }
 func (prt *jsonPrinter) DisplayColor(data any) error {
+	// create custom formatter
+	f := jsoncolor.NewFormatter()
+
+	dst, err := jsoncolor.MarshalIndentWithFormatter(data, "", "  ", f)
+	if err != nil {
+		return fmt.Errorf("unable to display output with error %w", err)
+	}
+
+	fmt.Println(string(dst))
+
 	return nil
 }
 func (prt *csvPrinter) DisplayColor(data any) error {
