@@ -26,6 +26,33 @@ import (
 	"github.com/nwidger/jsoncolor"
 )
 
+type Printer interface {
+	DisplayNoColor(data any) error
+	DisplayColor(data any) error
+}
+type jsonPrinter struct{}
+type csvPrinter struct{}
+type yamlPrinter struct{}
+
+func (prt *jsonPrinter) DisplayNoColor(data any) error {
+	return nil
+}
+func (prt *jsonPrinter) DisplayColor(data any) error {
+	return nil
+}
+func (prt *csvPrinter) DisplayColor(data any) error {
+	return prt.DisplayNoColor(data)
+}
+func (prt *csvPrinter) DisplayNoColor(data any) error {
+	return nil
+}
+func (prt *yamlPrinter) DisplayColor(data any) error {
+	return prt.DisplayNoColor(data)
+}
+func (prt *yamlPrinter) DisplayNoColor(data any) error {
+	return nil
+}
+
 // EmptyStruct is used when we wish to return an empty object.
 type EmptyStruct struct{}
 
