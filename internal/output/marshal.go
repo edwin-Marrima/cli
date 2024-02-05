@@ -20,6 +20,7 @@ package output
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gocarina/gocsv"
 	"gopkg.in/yaml.v3"
 	"os"
 
@@ -62,17 +63,22 @@ func (prt *csvPrinter) DisplayColor(data any) error {
 	return prt.DisplayNoColor(data)
 }
 func (prt *csvPrinter) DisplayNoColor(data any) error {
-	result, err := yaml.Marshal(data)
+	b, err := gocsv.MarshalBytes(data)
 	if err != nil {
-		return fmt.Errorf("unable to marshal yaml with error %w", err)
+		return err
 	}
-	fmt.Println(string(result))
+	fmt.Println(string(b))
 	return nil
 }
 func (prt *yamlPrinter) DisplayColor(data any) error {
 	return prt.DisplayNoColor(data)
 }
 func (prt *yamlPrinter) DisplayNoColor(data any) error {
+	result, err := yaml.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("unable to marshal yaml with error %w", err)
+	}
+	fmt.Println(string(result))
 	return nil
 }
 
