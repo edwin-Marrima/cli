@@ -18,7 +18,9 @@ package tuple
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	openfga "github.com/openfga/go-sdk"
 	"github.com/openfga/go-sdk/client"
@@ -34,6 +36,49 @@ var MaxReadPagesLength = 20
 type readResponse struct {
 	complete *openfga.ReadResponse
 	simple   []openfga.TupleKey
+}
+type readResponseCSVDTO struct {
+	UserType         string `csv:"user_type"`
+	UserID           string `csv:"user_id"`
+	UserRelation     string `csv:"user_relation,omitempty"`
+	Relation         string `csv:"relation"`
+	ObjectType       string `csv:"object_type"`
+	ObjectID         string `csv:"object_id"`
+	ConditionName    string `csv:"condition_name,omitempty"`
+	ConditionContext string `csv:"condition_context,omitempty"`
+}
+
+func (r readResponse) toReadResponseCSVDTO() ([]readResponseCSVDTO, error) {
+	readResponseDTO := make([]readResponseCSVDTO, 0, len(r.simple))
+	for _, readRes := range r.simple {
+		conditionName := ""
+		conditionalContext := ""
+		if readRes.Condition != nil {
+			conditionName = readRes.Condition.Name
+			if readRes.Condition.Context != nil {
+				b, err := json.Marshal(readRes.Condition.Context)
+				if err != nil {
+					return nil, fmt.Errorf("failed to convert tuples to CSV due to %w", err)
+				}
+				conditionalContext = string(b)
+			}
+		}
+		user := strings.Split(readRes.User, ":")
+		object := strings.Split(readRes.Object, ":")
+		readResponseDTO = append(
+			readResponseDTO,
+			readResponseCSVDTO{
+				UserType:         user[0],
+				UserID:           user[1],
+				Relation:         readRes.Relation,
+				ObjectType:       object[0],
+				ObjectID:         object[1],
+				ConditionName:    conditionName,
+				ConditionContext: conditionalContext,
+			},
+		)
+	}
+	return readResponseDTO, nil
 }
 
 func baseRead(fgaClient client.SdkClient, body *client.ClientReadRequest, maxPages int) (
