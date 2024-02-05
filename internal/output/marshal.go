@@ -28,12 +28,19 @@ import (
 	"github.com/nwidger/jsoncolor"
 )
 
+// Printer is a content type agnostic interface for displaying data.
 type Printer interface {
 	DisplayNoColor(data any) error
 	DisplayColor(data any) error
 }
+
+// jsonPrinter implements the Printer interface for JSON output.
 type jsonPrinter struct{}
+
+// csvPrinter implements the Printer interface for CSV output.
 type csvPrinter struct{}
+
+// yamlPrinter implements the Printer interface for YAML output.
 type yamlPrinter struct{}
 
 func (prt *jsonPrinter) DisplayNoColor(data any) error {
@@ -65,7 +72,7 @@ func (prt *csvPrinter) DisplayColor(data any) error {
 func (prt *csvPrinter) DisplayNoColor(data any) error {
 	b, err := gocsv.MarshalBytes(data)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to marshal CSV with error: %w", err)
 	}
 	fmt.Println(string(b))
 	return nil
@@ -80,6 +87,37 @@ func (prt *yamlPrinter) DisplayNoColor(data any) error {
 	}
 	fmt.Println(string(result))
 	return nil
+}
+
+// UniPrinter is a universal printer that can handle different output formats.
+type UniPrinter struct {
+	Colorful bool
+	Printer  Printer
+}
+
+// NewUniPrinter creates a new UniPrinter based on the specified output format and optional functional options.
+func NewUniPrinter(outputFormat string) *UniPrinter {
+	uniPrinter := UniPrinter{Colorful: true}
+	if os.Getenv("NO_COLOR") != "" {
+		uniPrinter.Colorful = false
+	}
+	switch outputFormat {
+	case "yaml":
+		uniPrinter.Printer = &yamlPrinter{}
+	case "csv":
+		uniPrinter.Printer = &csvPrinter{}
+	default:
+		uniPrinter.Printer = &jsonPrinter{}
+	}
+	return &uniPrinter
+}
+
+// Display prints the data using the configured printer and color settings.
+func (prt UniPrinter) Display(data any) error {
+	if prt.Colorful {
+		return prt.Printer.DisplayColor(data)
+	}
+	return prt.Printer.DisplayNoColor(data)
 }
 
 // EmptyStruct is used when we wish to return an empty object.
