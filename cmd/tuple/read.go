@@ -171,11 +171,19 @@ var readCmd = &cobra.Command{
 		}
 
 		simpleOutput, _ := cmd.Flags().GetBool("simple-output")
+		outputFormat, _ := cmd.Flags().GetString("output-format")
+		dataPrinter := output.NewUniPrinter(outputFormat)
+		if outputFormat == "csv" {
+			data, _ := response.toReadResponseCSVDTO()
+			return dataPrinter.Display(data)
+		}
+		var data any
+		data = *response.complete
 		if simpleOutput {
-			return output.Display(response.simple) //nolint:wrapcheck
+			data = response.simple //nolint:wrapcheck
 		}
 
-		return output.Display(*response.complete) //nolint:wrapcheck
+		return dataPrinter.Display(data) //nolint:wrapcheck
 	},
 }
 
@@ -184,5 +192,6 @@ func init() {
 	readCmd.Flags().String("relation", "", "Relation")
 	readCmd.Flags().String("object", "", "Object")
 	readCmd.Flags().Int("max-pages", MaxReadPagesLength, "Max number of pages to get. Set to 0 to get all pages.")
-	readCmd.Flags().Bool("simple-output", false, "Output simpler JSON version. (It can be used by write and delete commands)") //nolint:lll
+	readCmd.Flags().String("output-format", "json", "Specifies the format for data presentation. Valid options: json, csv, and yaml.")
+	readCmd.Flags().Bool("simple-output", false, "Output data in simpler version. (It can be used by write and delete commands)") //nolint:lll
 }
