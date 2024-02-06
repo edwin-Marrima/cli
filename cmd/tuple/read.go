@@ -48,9 +48,11 @@ type readResponseCSVDTO struct {
 	ConditionContext string `csv:"condition_context,omitempty"`
 }
 
-func (r readResponse) toReadResponseCSVDTO() ([]readResponseCSVDTO, error) {
+func (r readResponse) toCsvDTO() ([]readResponseCSVDTO, error) {
 	readResponseDTO := make([]readResponseCSVDTO, 0, len(r.simple))
+
 	for _, readRes := range r.simple {
+		// Handle Condition
 		conditionName := ""
 		conditionalContext := ""
 		if readRes.Condition != nil {
@@ -58,26 +60,28 @@ func (r readResponse) toReadResponseCSVDTO() ([]readResponseCSVDTO, error) {
 			if readRes.Condition.Context != nil {
 				b, err := json.Marshal(readRes.Condition.Context)
 				if err != nil {
-					return nil, fmt.Errorf("failed to convert tuples to CSV due to %w", err)
+					return nil, fmt.Errorf("failed to convert condition context to CSV: %w", err)
 				}
 				conditionalContext = string(b)
 			}
 		}
+
+		// Split User and Object
 		user := strings.Split(readRes.User, ":")
 		object := strings.Split(readRes.Object, ":")
-		readResponseDTO = append(
-			readResponseDTO,
-			readResponseCSVDTO{
-				UserType:         user[0],
-				UserID:           user[1],
-				Relation:         readRes.Relation,
-				ObjectType:       object[0],
-				ObjectID:         object[1],
-				ConditionName:    conditionName,
-				ConditionContext: conditionalContext,
-			},
-		)
+
+		// Append to DTO
+		readResponseDTO = append(readResponseDTO, readResponseCSVDTO{
+			UserType:         user[0],
+			UserID:           user[1],
+			Relation:         readRes.Relation,
+			ObjectType:       object[0],
+			ObjectID:         object[1],
+			ConditionName:    conditionName,
+			ConditionContext: conditionalContext,
+		})
 	}
+
 	return readResponseDTO, nil
 }
 
@@ -174,7 +178,7 @@ var readCmd = &cobra.Command{
 		outputFormat, _ := cmd.Flags().GetString("output-format")
 		dataPrinter := output.NewUniPrinter(outputFormat)
 		if outputFormat == "csv" {
-			data, _ := response.toReadResponseCSVDTO()
+			data, _ := response.toCsvDTO()
 			return dataPrinter.Display(data)
 		}
 		var data any

@@ -420,7 +420,7 @@ func TestReadResponseCSVDTOParser(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		outcome, _ := testCase.readRes.toReadResponseCSVDTO()
+		outcome, _ := testCase.readRes.toCsvDTO()
 		assert.Equal(t, testCase.expected, outcome)
 	}
 }
